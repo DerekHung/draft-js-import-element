@@ -9,7 +9,7 @@ import {
   genKey,
 } from 'draft-js';
 import {List, OrderedSet, Repeat, Seq} from 'immutable';
-import {BLOCK_TYPE, ENTITY_TYPE, INLINE_STYLE} from 'draft-js-utils';
+import {BLOCK_TYPE, INLINE_STYLE} from 'draft-js-utils';
 import {NODE_TYPE_ELEMENT, NODE_TYPE_TEXT} from 'synthetic-dom';
 
 import type {Set, IndexedSeq} from 'immutable';
@@ -61,6 +61,12 @@ const EMPTY_BLOCK = new ContentBlock({
   depth: 0,
 });
 
+const ENTITY_TYPE = {
+  LINK: 'LINK',
+  IMAGE: 'IMAGE',
+  VIDEO: 'VIDEO'
+};
+
 const LINE_BREAKS = /(\r\n|\r|\n)/g;
 // We use `\r` because that character is always stripped from source (normalized
 // to `\n`), so it's safe to assume it will only appear in the text content when
@@ -72,6 +78,7 @@ const ZERO_WIDTH_SPACE = '\u200B';
 const ELEM_ATTR_MAP = {
   a: {href: 'url', rel: 'rel', target: 'target', title: 'title'},
   img: {src: 'src', alt: 'alt'},
+  video: { src:'src', controls: 'controls'}
 };
 
 const getEntityData = (tagName: string, element: DOMElement) => {
@@ -105,6 +112,13 @@ const ELEM_TO_ENTITY = {
       return Entity.create(ENTITY_TYPE.IMAGE, 'MUTABLE', data);
     }
   },
+  video(tagName: string, element: DOMElement): ?string {
+    let data = getEntityData(tagName, element);
+    // Don't add `<img>` elements with no src.
+    if (data.src != null) {
+      return Entity.create(ENTITY_TYPE.VIDEO, 'IMMUTABLE', data);
+    }
+  },
 };
 
 // TODO: Move this out to a module.
@@ -131,7 +145,7 @@ const SPECIAL_ELEMENTS = {
 };
 
 // These elements are special because they cannot contain childNodes.
-const SELF_CLOSING_ELEMENTS = {img: 1};
+const SELF_CLOSING_ELEMENTS = {img: 1, video: 1};
 
 class BlockGenerator {
   blockStack: Array<ParsedBlock>;
