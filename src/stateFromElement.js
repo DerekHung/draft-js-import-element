@@ -64,7 +64,11 @@ const EMPTY_BLOCK = new ContentBlock({
 const ENTITY_TYPE = {
   LINK: 'LINK',
   IMAGE: 'IMAGE',
-  VIDEO: 'VIDEO'
+  VIDEO: 'VIDEO',
+  AUDIO: 'AUDIO',
+  HYPERLINK: 'HYPERLINK',
+  YOUTUBE: 'YOUTUBE',
+  DOCUMENT: 'DOCUMENT'
 };
 
 const LINE_BREAKS = /(\r\n|\r|\n)/g;
@@ -77,8 +81,10 @@ const ZERO_WIDTH_SPACE = '\u200B';
 // Map element attributes to entity data.
 const ELEM_ATTR_MAP = {
   a: {href: 'url', rel: 'rel', target: 'target', title: 'title'},
-  img: {src: 'src', alt: 'alt'},
-  video: { src:'src', controls: 'controls'}
+  img: {fileId:'fileId',src: 'src', alt: 'alt'},
+  video: { fileId:'fileId',src: 'src', controls: 'controls'},
+  audio: { fileId:'fileId',src: 'src', controls: 'controls'},
+  iframe: { src:'src', controls: 'controls'},
 };
 
 const getEntityData = (tagName: string, element: DOMElement) => {
@@ -108,15 +114,43 @@ const ELEM_TO_ENTITY = {
   img(tagName: string, element: DOMElement): ?string {
     let data = getEntityData(tagName, element);
     // Don't add `<img>` elements with no src.
-    if (data.src != null) {
-      return Entity.create(ENTITY_TYPE.IMAGE, 'MUTABLE', data);
+    if (data.fileId != null) {
+      return Entity.create(ENTITY_TYPE.IMAGE, 'IMMUTABLE', data);
     }
   },
   video(tagName: string, element: DOMElement): ?string {
     let data = getEntityData(tagName, element);
     // Don't add `<img>` elements with no src.
-    if (data.src != null) {
+    if (data.fileId != null) {
       return Entity.create(ENTITY_TYPE.VIDEO, 'IMMUTABLE', data);
+    }
+  },
+  audio(tagName: string, element: DOMElement): ?string {
+    let data = getEntityData(tagName, element);
+    // Don't add `<img>` elements with no src.
+    if (data.fileId != null) {
+      return Entity.create(ENTITY_TYPE.AUDIO, 'IMMUTABLE', data);
+    }
+  },
+  document(tagName: string, element: DOMElement): ?string {
+    let data = getEntityData(tagName, element);
+    // Don't add `<img>` elements with no src.
+    if (data.fileId != null) {
+      return Entity.create(ENTITY_TYPE.DOCUMENT, 'IMMUTABLE', data);
+    }
+  },
+  iframe(tagName: string, element: DOMElement): ?string {
+    let data = getEntityData(tagName, element);
+    // Don't add `<img>` elements with no src.
+    if (data.sec != null) {
+      return Entity.create(ENTITY_TYPE.YOUTUBE, 'IMMUTABLE', data);
+    }
+  },
+  div(tagName: string, element: DOMElement): ?string {
+    let data = getEntityData(tagName, element);
+    // Don't add `<img>` elements with no src.
+    if (data.src != null) {
+      return Entity.create(ENTITY_TYPE.HYPERLINK, 'IMMUTABLE', data);
     }
   },
 };
